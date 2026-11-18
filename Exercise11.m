@@ -3,18 +3,12 @@ clear;close all; clc;
 
 % parameters (fixed)
 sigma_w = 1;
-L=10000 %to set higher
+L=10000;
  
 % Parameters values
-N0s = [0, 5, 10, 20, 50, 100, 200];
+N0s = [0, 5, 10, 20, 50, 100, 200, 400, 800];
 rhos = [0, 0.5, 0.9, 0.99];
 Ns = linspace(20, 200, 10);
-
-% values to search
-minN0 = 0;
-minN = 0;
-minRho = 0;
-minMSE = 1000;
 
 % storage for MSEs
 MSEs = zeros(length(Ns), length(rhos), length(N0s));
@@ -45,22 +39,64 @@ for i = 1:length(Ns)
             
             MSEs(i,j,k) = mean((C - sample_cov).^2, 'all');
 
-            if (MSEs(i,j,k)<minMSE)
-                minMSE = MSEs(i,j,k);
-                minRho = rhos(j);
-                minN = Ns(i);
-                minN0 = N0s(k);
-            end
         end
     end
 end
 
-minMSE
-minN
-minN0
-minRho
+MSEdB = 10*log10(MSEs); % Ns x rhos x N0s
 
-% functions
+%% plots
+close all;
+
+
+epsilon_dB = -38;
+idx_N = 1; % N=20 samples
+
+figure;
+% squeeze extracts a 2D matrix (length(rhos) x length(N0s)); 
+% transpose (') needed to have N0s on x-axis
+plot(N0s(1:5), squeeze(MSEdB(idx_N, :, 1:5))', '-o', 'LineWidth', 1.5);
+grid on;
+xlabel('Discarded transient samples (N_0)');
+ylabel('MSE [dB]');
+yline(epsilon_dB, '--r', 'LineWidth', 1.5, 'DisplayName', ['Threshold \epsilon (' num2str(epsilon_dB) ' dB)']);
+title(sprintf('MSE as a function of N_0 (with N = %d)', Ns(idx_N)));
+legend(compose('\\rho = %.2f', rhos), 'Location', 'best');
+
+
+figure;
+plot(N0s, squeeze(MSEdB(idx_N, :, :))', '-o', 'LineWidth', 1.5);
+grid on;
+xlabel('Discarded transient samples (N_0)');
+ylabel('MSE [dB]');
+yline(epsilon_dB, '--r', 'LineWidth', 1.5, 'DisplayName', ['Threshold \epsilon (' num2str(epsilon_dB) ' dB)']);
+title(sprintf('MSE as a function of N_0 (with N = %d)', Ns(idx_N)));
+legend(compose('\\rho = %.2f', rhos), 'Location', 'best');
+
+
+idx_N = 4; % N=60 samples
+
+figure;
+plot(N0s, squeeze(MSEdB(idx_N, :, :))', '-o', 'LineWidth', 1.5);
+grid on;
+xlabel('Discarded transient samples (N_0)');
+ylabel('MSE [dB]');
+title(sprintf('MSE as a function of N_0 (with N = %d)', Ns(idx_N)));
+legend(compose('\\rho = %.2f', rhos), 'Location', 'best');
+
+idx_N = 10; % N=200 samples
+
+figure;
+plot(N0s, squeeze(MSEdB(idx_N, :, :))', '-o', 'LineWidth', 1.5);
+grid on;
+xlabel('Discarded transient samples (N_0)');
+ylabel('MSE [dB]');
+title(sprintf('MSE as a function of N_0 (with N = %d)', Ns(idx_N)));
+legend(compose('\\rho = %.2f', rhos), 'Location', 'best');
+
+
+
+%% functions
 
 function y = covarianceFunction(sigma2w, rho, k)
     y = sigma2w*rho^k;
